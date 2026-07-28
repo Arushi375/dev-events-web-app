@@ -59,6 +59,33 @@ BookingSchema.pre('save' as any, async function (next: (err?: Error) => void) {
 
   next();
 });
+BookingSchema.pre('save', async function () {
+    const booking = this as IBooking;
+  
+    // Only validate eventId if it's new or modified
+    if (booking.isModified('eventId') || booking.isNew) {
+      try {
+        const eventExists = await Event.findById(booking.eventId).select('_id');
+  
+        if (!eventExists) {
+          const error = new Error(
+            `Event with ID ${booking.eventId} does not exist`
+          );
+          error.name = 'ValidationError';
+  
+          throw error;
+        }
+      } catch {
+        const validationError = new Error(
+          'Invalid event ID format or database error'
+        );
+  
+        validationError.name = 'ValidationError';
+  
+        throw validationError;
+      }
+    }
+  });
 
 // Create index on eventId for faster queries
 BookingSchema.index({ eventId: 1 });
