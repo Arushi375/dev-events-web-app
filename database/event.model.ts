@@ -1,3 +1,4 @@
+import mongoose, { Schema, model, models, Document } from 'mongoose';
 import { Schema, model, models, Document } from 'mongoose';
 
 // TypeScript interface for Event document
@@ -110,6 +111,8 @@ const EventSchema = new Schema<IEvent>(
 );
 
 // Pre-save hook for slug generation and data normalization
+(EventSchema as any).pre('save', function (this: IEvent, next: mongoose.CallbackWithoutResultAndOptionalError) {
+  const event = this;
 EventSchema.pre('save', function () {
   const event = this as IEvent;
 
@@ -128,6 +131,7 @@ EventSchema.pre('save', function () {
     event.time = normalizeTime(event.time);
   }
 
+  next();
 });
 
 // Helper function to generate URL-friendly slug
@@ -183,6 +187,9 @@ EventSchema.index({ slug: 1 }, { unique: true });
 // Create compound index for common queries
 EventSchema.index({ date: 1, mode: 1 });
 
+const Event = models.Event || model<IEvent>('Event', EventSchema);
+
+export default Event;
 const EventModel =
   models.Event || model<IEvent>('Event', EventSchema);
 
